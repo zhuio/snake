@@ -1,9 +1,10 @@
 # 程序出入口
+import os
+pwd = os.path.abspath('.')
 
 rule all:
     input:
-        # expand('{sample}.fasta.transdecoder.pep', sample=['rose3.sqlite']),
-        'final.fasta.transdecoder.pep'
+        expand('{sample}.assemblies.fasta.transdecoder.genome.gff3', sample=['sample.sqlite'])
 
 rule cat:
     input:
@@ -45,38 +46,39 @@ rule Launch_PASA_pipeline:
         r1 = rules.seqclean.output,
         r2 = 'genome.fasta',
         r3 = rules.accession_extractor.output,
-        r4 = 'alignAssembly.config',
-        r5 = rules.seqclean.output
+        pwd = pwd
     output:
-        'final.fasta',
-        'final.gff3'
+        '{sample}.assemblies.fasta',
+        '{sample}.pasa_assemblies.gff3'
     shell:
         """
-        $PASAHOME/Launch_PASA_pipeline.pl \
-        -c {input.r} -t {input.r1} -C -R -g \
-        {input.r2} --ALIGNERS blat,gmap --CPU 2 \
-        --TDN {input.r3}
+        sudo docker pull pasapipeline/pasapipeline \
+        && sudo docker run --rm -it \
+      -v /tmp:/tmp \
+      -v {input.pwd}:{input.pwd}  \
+       pasapipeline/pasapipeline:latest \
+        bash -c 'cd {input.pwd} \
+              && /usr/local/src/PASApipeline/Launch_PASA_pipeline.pl \
+              -c {input.r} -C -R \
+              --ALIGNER gmap -g {input.r2} -t {input.r1} \
+              --TDN {input.r3}'
         """
-        """
-        $PASAHOME/scripts/build_comprehensive_transcriptome.dbi \
-        -c {input.r4} -t {input.r5} --min_per_ID 95 --min_per_aligned 30
-        """
-        """
-        mv compreh_init_build/compreh_init_build.fasta final.fasta
-        mv compreh_init_build/compreh_init_build.gff3 final.gff3
-        """
-
-
 
 rule pasa_asmbls_to_training_set:
     input:
         r = rules.Launch_PASA_pipeline.output[0],
         r1 = rules.Launch_PASA_pipeline.output[1],
+        pwd = pwd
     output:
-        'final.fasta.transdecoder.pep'
+        '{sample}.assemblies.fasta.transdecoder.genome.gff3'
     shell:
         """
-        $PASAHOME/scripts/pasa_asmbls_to_training_set.dbi \
+        sudo docker run --rm -it \
+      -v /tmp:/tmp \
+      -v {input.pwd}:{input.pwd}  \
+       pasapipeline/pasapipeline:latest \
+       bash -c 'cd {input.pwd} \
+             && /usr/local/src/PASApipeline/scripts/pasa_asmbls_to_training_set.dbi \
        --pasa_transcripts_fasta {input.r} \
        --pasa_transcripts_gff3 {input.r1}
         """
