@@ -12,10 +12,10 @@ sudo apt-get install -y gcc g++ perl python automake make \
                                        x11-common libcairo2-dev   libjpeg8-dev pkg-config libtbb-dev \
                                        sqlite lighttpd libgd-tools mysql-server mysql-client libmysqlclient-dev htop \
                                        vim screen openssh-server tree libgtk2.0-dev \
-                                       libboost-iostreams-dev install zlib1g-dev libmysql++-dev libgsl-dev libsqlite3-dev \
+                                       libboost-iostreams-dev  zlib1g-dev libmysql++-dev libgsl-dev libsqlite3-dev \
                                        libboost-graph-dev libsuitesparse-dev liblpsolve55-dev bamtools
 
-
+install 
 
 
 
